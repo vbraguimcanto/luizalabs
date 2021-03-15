@@ -4,7 +4,7 @@ from flask import request
 from flask_restful import Resource, reqparse
 from flask_expects_json import expects_json
 from jsonschema import validate
-from app.models.models import ClientModel
+from app.models.models import ClientModel, ProductModel
 
 schema_client = {
     'type': 'object',
@@ -13,6 +13,18 @@ schema_client = {
         'email': {'type': 'string'}
     },
     'required': ['name', 'email']
+}
+
+schema_product = {
+    'type': 'object',
+    'properties': {
+        'title': {'type': 'string'},
+        'brand': {'type': 'string'},
+        'image': {'type': 'string'},
+        'price': {'type': 'number'},
+        'reviewScore': {'type': 'number'}
+    },
+    'required': ['title', 'brand', 'image', 'price', 'reviewScore']
 }
 
 class Client(Resource):
@@ -34,7 +46,7 @@ class Client(Resource):
                 client.save()
             else:
                 return {
-                    "message": "Cliente já cadastrado"
+                    "message": "Cliente ja cadastrado"
                 }, 200
 
             return {
@@ -110,20 +122,72 @@ class Product(Resource):
     def __init__(self, **kwargs):
         self.logger = kwargs.get('logging')
 
-    # criar schema json
+    @expects_json(schema_product)
     def post(self):
-        pass
+        try:
+            self.payload_request = json.loads(request.get_data())
+
+            if not ProductModel.check_by_title(self.payload_request['title']):
+                product = ProductModel(
+                    title = self.payload_request['title'],
+                    brand = self.payload_request['brand'],
+                    image = self.payload_request['image'], 
+                    price = self.payload_request['price'],
+                    review_score = self.payload_request['reviewScore']         
+                )
+                product.save()
+            else:
+                return {
+                    "message": "Produto ja cadastrado"
+                }, 200
+
+            return {
+                "message": "Produto cadastrado com sucesso"
+            }, 201
+
+
+        except Exception as error:
+            self.logger.error(f"Erro ao receber a requisicao. Motivo: {error}")
+            return "", 500
 
     # tratar para paginas enviadas menores que zero
     def get(self):
-        pass
-
-    # realizar a exclusao via ID
+        try:
+            self.logger.info("Recebendo request para buscar produtos")
+            page = request.args.get('page', 1, type=int)
+            def to_json(x):
+                return {
+                    'id': x.id,
+                    'title': x.title,
+                    'brand': x.brand,
+                    'price': float("{:.2f}".format(x.price)),
+                    'image': x.image,
+                    'reviewScore': float("{:.2f}".format(x.review_score))
+                }
+            return {'products': list(map(lambda x: to_json(x), ProductModel.query.paginate(page=page, per_page=15, error_out=False).items))}
+        
+        except Exception as error:
+            self.logger.error(f"Erro ao receber a requisicao. Motivo: {error}")
+            return "", 500
+    
     def delete(self):
-        pass
+        try:
+            self.logger.info("Recebendo request para deletar produtos")
+            product_id = request.args.get('id')
+            if ProductModel.check_by_id(product_id):
+                ProductModel.delete_by_id(product_id)
+                return {
+                    "message": "Produto deletado"
+                }, 200
+            else:
+                return {
+                    "message": "Produto nao encontrado"
+                }, 200
 
-    def put(self):
-        pass
+            
+        except Exception as error:
+            self.logger.error(f"Erro ao receber a requisicao. Motivo: {error}")
+            return "", 500
 
 class ClientProduct(Resource):
     

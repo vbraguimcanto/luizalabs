@@ -27,3 +27,7 @@ from app.controllers import resources
 api.add_resource(resources.Client, '/api/clients', resource_class_kwargs={
     'logging': logging
 })
+
+api.add_resource(resources.Product, '/api/products', resource_class_kwargs={
+    'logging': logging
+})

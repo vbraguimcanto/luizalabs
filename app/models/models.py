@@ -23,7 +23,7 @@ class ClientModel(db.Model):
                 'email': x.email,
                 'nome': x.name
             }
-        return {'clientes': list(map(lambda x: to_json(x), ClientModel.query.all()))}
+        return {'clients': list(map(lambda x: to_json(x), ClientModel.query.all()))}
     
     @classmethod
     def delete_by_email(cls, email):
@@ -39,3 +39,37 @@ class ClientModel(db.Model):
         
         except Exception as error:
             print("Ocorreu um erro na atualizacao de produtos. Motivo: {}".format(error))
+
+
+class ProductModel(db.Model):
+    __tablename__ = 'product'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String, nullable=False)
+    brand = db.Column(db.String, nullable=False)
+    image = db.Column(db.String, nullable=False)
+    review_score = db.Column(db.Numeric)
+    price = db.Column(db.Numeric, nullable=False)
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
+    @classmethod
+    def paginate_results(cls, page):
+        print("Iniciando paginate")
+        posts = ProductModel.query.paginate()
+        print(posts.per_page)
+
+    @classmethod
+    def check_by_title(cls, title):
+        return True if cls.query.filter_by(title = title).first() is not None else False
+    
+    @classmethod
+    def check_by_id(cls, id):
+        return True if cls.query.filter_by(id = id).first() is not None else False
+    
+    @classmethod
+    def delete_by_id(cls, id):
+        cls.query.filter_by(id = id).delete()
+        db.session.commit()
