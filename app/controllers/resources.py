@@ -5,6 +5,7 @@ from flask_restful import Resource, reqparse
 from flask_expects_json import expects_json
 from jsonschema import validate
 from app.models.models import ClientModel, ProductModel, ClientProductModel
+from app import cache
 
 schema_client = {
     'type': 'object',
@@ -70,7 +71,7 @@ class Client(Resource):
             self.logger.error(f"Erro ao receber a requisicao. Motivo: {error}")
             return "", 500
 
-    # adicionar filtro de visualização e paginação
+    @cache.cached(timeout=10)
     def get(self):
         try:
             self.logger.info("Recebendo request para buscar clientes")
@@ -159,7 +160,7 @@ class Product(Resource):
             self.logger.error(f"Erro ao receber a requisicao. Motivo: {error}")
             return "", 500
 
-    # tratar para paginas enviadas menores que zero
+    @cache.cached(timeout=10)
     def get(self):
         try:
             self.logger.info("Recebendo request para buscar produtos")
@@ -234,3 +235,8 @@ class ClientProduct(Resource):
         except Exception as error:
             self.logger.error(f"Erro ao receber a requisicao. Motivo: {error}")
             return "", 500
+
+    """
+    @cache.cached(timeout=10)
+    Endpoint para trazer uma lista de produtos de um determinado clientes
+    """

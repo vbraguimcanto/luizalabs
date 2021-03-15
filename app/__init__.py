@@ -2,6 +2,7 @@ from flask import Flask
 from flask import render_template
 from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
+from flask_caching import Cache
 import os
 import logging
 
@@ -15,6 +16,9 @@ api = Api(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://luizalabs:t3st@lu1z4l4bs@localhost:5432/luizalabs'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 't3st@lu1z4l4bs'
+app.config['REDIS_URI'] = 'redis://localhost:6379/0'
+
+cache = Cache(app, config={'CACHE_TYPE': 'redis', 'CACHE_REDIS_URL': app.config['REDIS_URI']})
 
 db = SQLAlchemy(app)
 
