@@ -1,6 +1,8 @@
 from app import db
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import UniqueConstraint
+
 
 class ClientModel(db.Model):
     __tablename__ = 'client'
@@ -73,3 +75,21 @@ class ProductModel(db.Model):
     def delete_by_id(cls, id):
         cls.query.filter_by(id = id).delete()
         db.session.commit()
+
+
+class ClientProductModel(db.Model):
+    __tablename__ = 'client_product'
+
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id', ondelete='CASCADE'), nullable=False)
+    client_id = db.Column(db.String, db.ForeignKey('client.email', ondelete='CASCADE'), nullable=False)
+
+    __table_args__ = (UniqueConstraint('product_id', 'client_id', name='client_product_unique_constraint'),)
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
+    @classmethod
+    def check_product_by_email(cls, product_id, email):
+        return True if cls.query.filter_by(product_id = product_id, client_id = email).first() is not None else False

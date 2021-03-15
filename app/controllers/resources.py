@@ -4,7 +4,7 @@ from flask import request
 from flask_restful import Resource, reqparse
 from flask_expects_json import expects_json
 from jsonschema import validate
-from app.models.models import ClientModel, ProductModel
+from app.models.models import ClientModel, ProductModel, ClientProductModel
 
 schema_client = {
     'type': 'object',
@@ -25,6 +25,15 @@ schema_product = {
         'reviewScore': {'type': 'number'}
     },
     'required': ['title', 'brand', 'image', 'price', 'reviewScore']
+}
+
+schema_product_list = {
+    'type': 'object',
+    'properties': {
+        'product_id': {'type': 'integer'},
+        'email': {'type': 'string'},
+    },
+    'required': ['product_id', 'email']
 }
 
 class Client(Resource):
@@ -194,17 +203,34 @@ class ClientProduct(Resource):
     def __init__(self, **kwargs):
         self.logger = kwargs.get('logging')
 
-    # criar schema json
+    @expects_json(schema_product_list)
     def post(self):
-        pass
+        try:
+            self.payload_request = json.loads(request.get_data())
 
-    # tratar para paginas enviadas menores que zero
-    def get(self):
-        pass
+            if not ClientProductModel.check_product_by_email(self.payload_request['product_id'], self.payload_request['email']):
+                if ClientModel.check_by_email(self.payload_request['email']) and ProductModel.check_by_id(self.payload_request['product_id']):
+                    client_product = ClientProductModel(
+                        product_id = self.payload_request['product_id'],
+                        client_id = self.payload_request['email']
+                    )
+                    client_product.save()
 
-    # realizar a exclusao via ID do produto e e-mail
-    def delete(self):
-        pass
+                else:
+                    return {
+                        "message": "email e/ou product_id nao existem"
+                    }, 200
 
-    def put(self):
-        pass
+            else:
+                return {
+                    "message": "Produto ja cadastrado na lista"
+                }, 200
+
+            return {
+                "message": "Produto cadastrado na lista com sucesso"
+            }, 201
+
+
+        except Exception as error:
+            self.logger.error(f"Erro ao receber a requisicao. Motivo: {error}")
+            return "", 500
