@@ -3,6 +3,9 @@ from flask import render_template
 from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_caching import Cache
+from flask_jwt_extended import jwt_required
+from flask_jwt_extended import JWTManager
+
 import os
 import logging
 
@@ -17,8 +20,27 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://luizalabs:t3st@lu1z4l4bs@loc
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 't3st@lu1z4l4bs'
 app.config['REDIS_URI'] = 'redis://localhost:6379/0'
+app.config['JWT_SECRET_KEY'] = 't3st@lu1z4l4bs'
+app.config['JWT_BLACKLIST_ENABLED'] = True
+app.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access', 'refresh']
+app.config['JWT_REFRESH_TOKEN_EXPIRES'] = False
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False
+
 
 cache = Cache(app, config={'CACHE_TYPE': 'redis', 'CACHE_REDIS_URL': app.config['REDIS_URI']})
+
+jwt = JWTManager(app)
+
+@jwt.token_in_blocklist_loader
+def check_if_token_in_blacklist(jwt_header, jwt_payload):
+    jti = jwt_payload['jti']
+    return models.models.RevokedTokenModel.is_jti_blacklisted(jti)
+
+
+    jti = jwt_payload["jti"]
+    token_in_redis = jwt_redis_blocklist.get(jti)
+    return token_in_redis is not None
+
 
 db = SQLAlchemy(app)
 
@@ -37,5 +59,25 @@ api.add_resource(resources.Product, '/api/products', resource_class_kwargs={
 })
 
 api.add_resource(resources.ClientProduct, '/api/favorites', resource_class_kwargs={
+    'logging': logging
+})
+
+api.add_resource(resources.UserRegistration, '/api/users', resource_class_kwargs={
+    'logging': logging
+})
+
+api.add_resource(resources.UserLogin, '/api/login', resource_class_kwargs={
+    'logging': logging
+})
+
+api.add_resource(resources.UserLogoutRefresh, '/api/logout', resource_class_kwargs={
+    'logging': logging
+})
+
+api.add_resource(resources.TokenRefresh, '/api/refresh', resource_class_kwargs={
+    'logging': logging
+})
+
+api.add_resource(resources.SecretResource, '/api/secret', resource_class_kwargs={
     'logging': logging
 })

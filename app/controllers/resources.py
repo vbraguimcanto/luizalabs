@@ -5,6 +5,9 @@ from flask_restful import Resource, reqparse
 from flask_expects_json import expects_json
 from jsonschema import validate
 from app.models.models import ClientModel, ProductModel, ClientProductModel
+from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_required, get_jwt_identity, get_jwt)
+from flask_restful import Resource, reqparse
+from app.models.models import UserModel, RevokedTokenModel
 from app import cache
 
 schema_client = {
@@ -37,12 +40,17 @@ schema_product_list = {
     'required': ['product_id', 'email']
 }
 
+parser = reqparse.RequestParser()
+parser.add_argument('username', help = 'Este campo nao pode ser em branco', required = True)
+parser.add_argument('password', help = 'Este campo nao pode ser em branco', required = True)
+
 class Client(Resource):
     
     def __init__(self, **kwargs):
         self.logger = kwargs.get('logging')
 
     @expects_json(schema_client)
+    @jwt_required()
     def post(self):
         try:
             self.logger.info("Recebendo request para registrar cliente")
@@ -72,6 +80,7 @@ class Client(Resource):
             return "", 500
 
     @cache.cached(timeout=10)
+    @jwt_required()
     def get(self):
         try:
             self.logger.info("Recebendo request para buscar clientes")
@@ -82,6 +91,7 @@ class Client(Resource):
             self.logger.error(f"Erro ao receber a requisicao. Motivo: {error}")
             return "", 500
     
+    @jwt_required()
     def delete(self):
         try:
             self.logger.info("Recebendo request para deletar clientes")
@@ -103,6 +113,7 @@ class Client(Resource):
     
     
     @expects_json(schema_client)
+    @jwt_required()
     def put(self):
         try:
             self.logger.info("Recebendo request para atualizar cliente")
@@ -133,6 +144,7 @@ class Product(Resource):
         self.logger = kwargs.get('logging')
 
     @expects_json(schema_product)
+    @jwt_required()
     def post(self):
         try:
             self.payload_request = json.loads(request.get_data())
@@ -161,6 +173,7 @@ class Product(Resource):
             return "", 500
 
     @cache.cached(timeout=10)
+    @jwt_required()
     def get(self):
         try:
             self.logger.info("Recebendo request para buscar produtos")
@@ -180,6 +193,7 @@ class Product(Resource):
             self.logger.error(f"Erro ao receber a requisicao. Motivo: {error}")
             return "", 500
     
+    @jwt_required()
     def delete(self):
         try:
             self.logger.info("Recebendo request para deletar produtos")
@@ -205,6 +219,7 @@ class ClientProduct(Resource):
         self.logger = kwargs.get('logging')
 
     @expects_json(schema_product_list)
+    @jwt_required()
     def post(self):
         try:
             self.payload_request = json.loads(request.get_data())
@@ -240,3 +255,118 @@ class ClientProduct(Resource):
     @cache.cached(timeout=10)
     Endpoint para trazer uma lista de produtos de um determinado clientes
     """
+
+
+
+class UserRegistration(Resource):
+
+    def __init__(self, **kwargs):
+        self.logger = kwargs.get('logging')
+
+    def post(self):
+        data = json.loads(request.get_data())
+        
+        if UserModel.find_by_username(data['username']):
+            return {
+                'message': 'Usuario {} ja existe'.format(data['username'])
+            }, 500
+        
+        new_user = UserModel(
+            username = data['username'],
+            password = UserModel.generate_hash(data['password'])
+        )
+        
+        try:
+            new_user.save_to_db()
+            access_token = create_access_token(identity = data['username'])
+            refresh_token = create_refresh_token(identity = data['username'])
+            return {
+                'message': 'Usuario {} criado'.format(data['username']),
+                'access_token': access_token,
+                'refresh_token': refresh_token
+                }, 201
+        except:
+            return {
+                'message': 'Erro ao cadastrar novo usuario'
+            }, 500
+
+
+class UserLogin(Resource):
+
+    def __init__(self, **kwargs):
+        self.logger = kwargs.get('logging')
+    
+    def post(self):
+        try:
+
+            data = json.loads(request.get_data())
+            current_user = UserModel.find_by_username(data['username'])
+
+            if not current_user:
+                return {
+                    'message': 'Usuario {} nao existe'.format(data['username'])
+                }, 200
+            
+            if UserModel.verify_hash(data['password'], current_user.password):
+                access_token = create_access_token(identity = data['username'])
+                refresh_token = create_refresh_token(identity = data['username'])
+                return {
+                    'message': 'Logado com o usuario {}'.format(current_user.username),
+                    'access_token': access_token,
+                    'refresh_token': refresh_token
+                }, 200
+            else:
+                return {
+                    'message': 'Credenciais invalidas'
+                }, 500
+        
+        except Exception as error:
+            self.logger.error(f"Erro ao receber a requisicao. Motivo: {error}")
+            
+class TokenRefresh(Resource):
+
+    def __init__(self, **kwargs):
+        self.logger = kwargs.get('logging')
+
+    @jwt_required()
+    def post(self):
+        current_user = get_jwt_identity()
+        access_token = create_access_token(identity = current_user)
+        return {
+            'access_token': access_token
+        }, 200
+      
+      
+class SecretResource(Resource):
+
+    def __init__(self, **kwargs):
+        self.logger = kwargs.get('logging')
+
+    @jwt_required()
+    def get(self):
+        return {
+            'answer': 42
+        }
+
+
+class UserLogoutRefresh(Resource):
+
+    def __init__(self, **kwargs):
+        self.logger = kwargs.get('logging')
+
+    @jwt_required()
+    def post(self):
+        jti = get_jwt()['jti']
+        try:
+            revoked_token = RevokedTokenModel(jti = jti)
+            revoked_token.add()
+            return {
+                'message': 'Token atualizado'
+            }, 200
+
+        except Exception as error:
+            self.logger.error(f"Erro ao receber a requisicao. Motivo: {error}")
+            return {
+                'message': 'Erro ao atualizar token'
+            }, 500
+

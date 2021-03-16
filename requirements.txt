@@ -7,3 +7,5 @@ brutils
 psycopg2
 gunicorn
 flask_caching
+flask_jwt_extended
+passlib
