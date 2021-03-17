@@ -104,7 +104,7 @@ class UserModel(db.Model):
     username = db.Column(db.String, unique = True, nullable = False)
     password = db.Column(db.String, nullable = False)
     
-    def save_to_db(self):
+    def save(self):
         db.session.add(self)
         db.session.commit()
     

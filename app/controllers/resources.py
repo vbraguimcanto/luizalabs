@@ -40,6 +40,15 @@ schema_product_list = {
     'required': ['product_id', 'email']
 }
 
+schema_user = {
+    'type': 'object',
+    'properties': {
+        'username': {'type': 'string'},
+        'password': {'type': 'string'},
+    },
+    'required': ['username', 'password']
+}
+
 parser = reqparse.RequestParser()
 parser.add_argument('username', help = 'Este campo nao pode ser em branco', required = True)
 parser.add_argument('password', help = 'Este campo nao pode ser em branco', required = True)
@@ -263,6 +272,7 @@ class UserRegistration(Resource):
     def __init__(self, **kwargs):
         self.logger = kwargs.get('logging')
 
+    @expects_json(schema_user)
     def post(self):
         data = json.loads(request.get_data())
         
@@ -277,7 +287,7 @@ class UserRegistration(Resource):
         )
         
         try:
-            new_user.save_to_db()
+            new_user.save()
             access_token = create_access_token(identity = data['username'])
             refresh_token = create_refresh_token(identity = data['username'])
             return {

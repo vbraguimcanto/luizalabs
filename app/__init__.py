@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_caching import Cache
 from flask_jwt_extended import jwt_required
 from flask_jwt_extended import JWTManager
+import datetime
 
 import os
 import logging
@@ -13,7 +14,11 @@ _basedir = os.path.abspath(os.path.dirname(__file__))
 
 logging.basicConfig(filename='app.log', format='%(asctime)s - %(message)s', level=logging.INFO)
 
-app = Flask(__name__)
+
+def create_app():
+    return Flask(__name__)
+
+app = create_app()
 api = Api(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://luizalabs:t3st@lu1z4l4bs@localhost:5432/luizalabs'
@@ -35,11 +40,6 @@ jwt = JWTManager(app)
 def check_if_token_in_blacklist(jwt_header, jwt_payload):
     jti = jwt_payload['jti']
     return models.models.RevokedTokenModel.is_jti_blacklisted(jti)
-
-
-    jti = jwt_payload["jti"]
-    token_in_redis = jwt_redis_blocklist.get(jti)
-    return token_in_redis is not None
 
 
 db = SQLAlchemy(app)

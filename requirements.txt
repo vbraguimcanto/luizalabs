@@ -9,3 +9,5 @@ gunicorn
 flask_caching
 flask_jwt_extended
 passlib
+pytest-flask
+pytest-cov
