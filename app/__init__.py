@@ -21,10 +21,10 @@ def create_app():
 app = create_app()
 api = Api(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://luizalabs:t3st@lu1z4l4bs@localhost:5432/luizalabs'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://luizalabs:t3st@lu1z4l4bs@postgres-server:5432/luizalabs'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 't3st@lu1z4l4bs'
-app.config['REDIS_URI'] = 'redis://localhost:6379/0'
+app.config['REDIS_URI'] = 'redis://redis-server:6379/0'
 app.config['JWT_SECRET_KEY'] = 't3st@lu1z4l4bs'
 app.config['JWT_BLACKLIST_ENABLED'] = True
 app.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access', 'refresh']

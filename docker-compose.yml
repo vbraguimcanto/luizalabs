@@ -37,6 +37,9 @@ services:
       - "5000"
     networks: 
       - api-network
+    depends_on:
+        - "postgres-server"
+        - "redis-server"
   
   api-2:
     build: 
@@ -56,7 +59,7 @@ services:
     image: vhbc/redis
     container_name: redis-server
     ports:
-      - "6379"
+      - "6379:6379"
     networks: 
       - api-network
 

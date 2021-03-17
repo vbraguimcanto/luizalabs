@@ -307,9 +307,9 @@ class UserRegistration(Resource):
                 'access_token': access_token,
                 'refresh_token': refresh_token
                 }, 201
-        except:
+        except Exception as error:
             return {
-                'message': 'Erro ao cadastrar novo usuario'
+                'message': 'Erro ao cadastrar novo usuario.'
             }, 500
 
 
