@@ -77,6 +77,11 @@ class ProductModel(db.Model):
     def delete_by_id(cls, id):
         cls.query.filter_by(id = id).delete()
         db.session.commit()
+    
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
+        
 
 
 class ClientProductModel(db.Model):
@@ -96,6 +101,13 @@ class ClientProductModel(db.Model):
     def check_product_by_email(cls, product_id, email):
         return True if cls.query.filter_by(product_id = product_id, client_id = email).first() is not None else False
 
+    @classmethod
+    def find_by_email(cls, email):
+        def to_json(x):
+            return {
+                'product_name': (ProductModel.find_by_id(x.product_id)).title
+            }
+        return {'product_list': list(map(lambda x: to_json(x), ClientProductModel.query.filter_by(client_id = email)))}
 
 class UserModel(db.Model):
     __tablename__ = 'users'

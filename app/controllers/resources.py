@@ -260,10 +260,22 @@ class ClientProduct(Resource):
             self.logger.error(f"Erro ao receber a requisicao. Motivo: {error}")
             return "", 500
 
-    """
     @cache.cached(timeout=10)
-    Endpoint para trazer uma lista de produtos de um determinado clientes
-    """
+    def get(self):
+        try:
+            email = request.args.get('email')
+
+            if ClientModel.check_by_email(email):
+                products_json = ClientProductModel.find_by_email(email)
+                return products_json, 200
+            else:
+                return {
+                    "message": "Email nao cadastrado"
+                }, 200
+
+        except Exception as error:
+            self.logger.error(f"Erro ao receber a requisicao. Motivo: {error}")
+            return "", 500
 
 
 
