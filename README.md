@@ -27,8 +27,9 @@ docker-compose up -d
 ```
 
 ### Como executar os testes?
-
+```
 python -m unittest discover -s <path>/tests -t <path>/tests
+```
 
 ### Sugestões de Melhorias
 
