@@ -74,7 +74,7 @@ class Client(Resource):
             else:
                 return {
                     "message": "Cliente ja cadastrado"
-                }, 200
+                }, 409
 
             return {
                 "message": "Cliente cadastrado com sucesso"
@@ -170,7 +170,7 @@ class Product(Resource):
             else:
                 return {
                     "message": "Produto ja cadastrado"
-                }, 200
+                }, 409
 
             return {
                 "message": "Produto cadastrado com sucesso"
@@ -249,7 +249,7 @@ class ClientProduct(Resource):
             else:
                 return {
                     "message": "Produto ja cadastrado na lista"
-                }, 200
+                }, 409
 
             return {
                 "message": "Produto cadastrado na lista com sucesso"
@@ -291,7 +291,7 @@ class UserRegistration(Resource):
         if UserModel.find_by_username(data['username']):
             return {
                 'message': 'Usuario {} ja existe'.format(data['username'])
-            }, 500
+            }, 409
         
         new_user = UserModel(
             username = data['username'],
@@ -328,7 +328,7 @@ class UserLogin(Resource):
                 return {
                     'message': 'Usuario {} nao existe'.format(data['username'])
                 }, 200
-            
+
             if UserModel.verify_hash(data['password'], current_user.password):
                 access_token = create_access_token(identity = data['username'])
                 refresh_token = create_refresh_token(identity = data['username'])
