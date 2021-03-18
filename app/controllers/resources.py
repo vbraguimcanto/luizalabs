@@ -371,24 +371,3 @@ class SecretResource(Resource):
         }
 
 
-class UserLogoutRefresh(Resource):
-
-    def __init__(self, **kwargs):
-        self.logger = kwargs.get('logging')
-
-    @jwt_required()
-    def post(self):
-        jti = get_jwt()['jti']
-        try:
-            revoked_token = RevokedTokenModel(jti = jti)
-            revoked_token.add()
-            return {
-                'message': 'Token atualizado'
-            }, 200
-
-        except Exception as error:
-            self.logger.error(f"Erro ao receber a requisicao. Motivo: {error}")
-            return {
-                'message': 'Erro ao atualizar token'
-            }, 500
-

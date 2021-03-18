@@ -70,10 +70,6 @@ api.add_resource(resources.UserLogin, '/api/login', resource_class_kwargs={
     'logging': logging
 })
 
-api.add_resource(resources.UserLogoutRefresh, '/api/logout', resource_class_kwargs={
-    'logging': logging
-})
-
 api.add_resource(resources.TokenRefresh, '/api/refresh', resource_class_kwargs={
     'logging': logging
 })
