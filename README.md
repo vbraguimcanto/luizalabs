@@ -9,8 +9,9 @@ API Rest de Produtos (Marketing)
 3. Deploy da API utilizando o Gunicorn.
 4. Banco de Dados: PostgreSQL 12.
 5. Toda arquitetura foi desenvolvida utilizando Docker.
-6. Toda a aplicação está coberta por Testes Unitários.
-7. No diretório extras, há uma collection do Postman para testes.
+6. A API possui cache utilizando o Redis.
+7. Toda a aplicação está coberta por Testes Unitários.
+8. No diretório doc-postman, há uma collection do Postman para testes.
 
 ### Como executar a aplicação?
 
